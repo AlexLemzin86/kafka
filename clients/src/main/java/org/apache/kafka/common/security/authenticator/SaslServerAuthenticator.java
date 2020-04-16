@@ -277,16 +277,18 @@ public class SaslServerAuthenticator implements Authenticator {
                     break;
             }
             LOG_AUTH.info("Principal = {} Allowed authentication with some data: ListenerName = {}," +
-                            " SaslServer = {}, SecurityProtocol = {}, ClientAddress = {} ",
-                    principal().toString(), this.listenerName.value(), this.saslServer.toString(),
-                    this.securityProtocol, clientAddress());
+                            " SaslServer = (AuthorizationID={}, MechanismName={}), SaslState = {}," +
+                            " SecurityProtocol = {}, ClientAddress = {} ",
+                    principal().toString(), this.listenerName.value(), this.saslServer.getAuthorizationID(),
+                    this.saslMechanism, this.saslState, this.securityProtocol, clientAddress());
         } catch (AuthenticationException e) {
             // Exception will be propagated after response is sent to client
             LOG_AUTH.info("Principal = {} DENIED to authentication due AuthenticationException with some data:" +
-                            " ListenerName = {}, SaslServer = {}, SecurityProtocol = {}, ClientAddress = {}," +
-                            " ExceptionMessage = {} ",
-                    principal().toString(), this.listenerName.value(), this.saslServer.toString(),
-                    this.securityProtocol, clientAddress(), e.getMessage());
+                            " ListenerName = {}, SaslServer = (AuthorizationID={}, MechanismName={}), SaslState = {}," +
+                            " SecurityProtocol = {}," +
+                            " ClientAddress = {}, ExceptionMessage = {} ",
+                    principal().toString(), this.listenerName.value(), this.saslServer.getAuthorizationID(),
+                    this.saslMechanism, this.saslState, this.securityProtocol, clientAddress(), e.getMessage());
             setSaslState(SaslState.FAILED, e);
         } catch (Exception e) {
             // In the case of IOExceptions and other unexpected exceptions, fail immediately
@@ -313,10 +315,10 @@ public class SaslServerAuthenticator implements Authenticator {
 
     @Override
     public void handleAuthenticationFailure() throws IOException {
-        LOG_AUTH.info("Principal = {} DENIED to authentication with some data:" +
-                        " ListenerName = {}, SaslServer = {}, SecurityProtocol = {}, ClientAddress = {}",
-                principal().toString(), this.listenerName.value(), this.saslServer.toString(),
-                this.securityProtocol, clientAddress());
+        LOG_AUTH.info("Principal = {} DENIED to authentication with some data:ListenerName = {}, SaslServer = {}," +
+                        " SaslState = (AuthorizationID={}, MechanismName={}), SecurityProtocol = {}, ClientAddress = {}",
+                principal().toString(), this.listenerName.value(), this.saslServer.getAuthorizationID(),
+                this.saslMechanism, this.saslState, this.securityProtocol, clientAddress());
         sendAuthenticationFailureResponse();
     }
 
@@ -342,10 +344,10 @@ public class SaslServerAuthenticator implements Authenticator {
         LOG.debug("Beginning re-authentication: {}", this);
         netInBuffer.payload().rewind();
         setSaslState(SaslState.REAUTH_PROCESS_HANDSHAKE);
-        LOG_AUTH.info("Principal = {} try to get re-authentication with some data:" +
-                        " ListenerName = {}, SaslServer = {}, SecurityProtocol = {}, ClientAddress = {}",
-                principal().toString(), this.listenerName.value(), this.saslServer.toString(),
-                this.securityProtocol, clientAddress());
+        LOG_AUTH.info("Principal = {} try to get re-authentication with some data:ListenerName = {}, SaslServer = {}," +
+                        " SaslState = (AuthorizationID={}, MechanismName={}), SecurityProtocol = {}, ClientAddress = {}",
+                principal().toString(), this.listenerName.value(), this.saslServer.getAuthorizationID(),
+                this.saslMechanism, this.saslState, this.securityProtocol, clientAddress());
         authenticate();
     }
 
