@@ -86,6 +86,7 @@ public class SaslServerAuthenticator implements Authenticator {
     // GSSAPI limits requests to 64K, but we allow a bit extra for custom SASL mechanisms
     static final int MAX_RECEIVE_SIZE = 524288;
     private static final Logger LOG = LoggerFactory.getLogger(SaslServerAuthenticator.class);
+    private static final Logger LOG_AUTH = LoggerFactory.getLogger("kafka.authenticator.logger");
 
     /**
      * The internal state transitions for initial authentication of a channel on the
@@ -275,8 +276,17 @@ public class SaslServerAuthenticator implements Authenticator {
                 default:
                     break;
             }
+            LOG_AUTH.info("Principal = {} Allowed authentication with some data: ListenerName = {}," +
+                            " SaslServer = {}, SecurityProtocol = {}, ClientAddress = {} ",
+                    principal().toString(), this.listenerName.value(), this.saslServer.toString(),
+                    this.securityProtocol, clientAddress());
         } catch (AuthenticationException e) {
             // Exception will be propagated after response is sent to client
+            LOG_AUTH.info("Principal = {} DENIED to authentication due AuthenticationException with some data:" +
+                            " ListenerName = {}, SaslServer = {}, SecurityProtocol = {}, ClientAddress = {}," +
+                            " ExceptionMessage = {} ",
+                    principal().toString(), this.listenerName.value(), this.saslServer.toString(),
+                    this.securityProtocol, clientAddress(), e.getMessage());
             setSaslState(SaslState.FAILED, e);
         } catch (Exception e) {
             // In the case of IOExceptions and other unexpected exceptions, fail immediately
@@ -303,6 +313,10 @@ public class SaslServerAuthenticator implements Authenticator {
 
     @Override
     public void handleAuthenticationFailure() throws IOException {
+        LOG_AUTH.info("Principal = {} DENIED to authentication with some data:" +
+                        " ListenerName = {}, SaslServer = {}, SecurityProtocol = {}, ClientAddress = {}",
+                principal().toString(), this.listenerName.value(), this.saslServer.toString(),
+                this.securityProtocol, clientAddress());
         sendAuthenticationFailureResponse();
     }
 
@@ -328,6 +342,10 @@ public class SaslServerAuthenticator implements Authenticator {
         LOG.debug("Beginning re-authentication: {}", this);
         netInBuffer.payload().rewind();
         setSaslState(SaslState.REAUTH_PROCESS_HANDSHAKE);
+        LOG_AUTH.info("Principal = {} try to get re-authentication with some data:" +
+                        " ListenerName = {}, SaslServer = {}, SecurityProtocol = {}, ClientAddress = {}",
+                principal().toString(), this.listenerName.value(), this.saslServer.toString(),
+                this.securityProtocol, clientAddress());
         authenticate();
     }
 
